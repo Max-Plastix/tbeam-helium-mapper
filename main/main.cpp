@@ -51,6 +51,7 @@
 #include "screen.h"
 #include "sleep.h"
 #include "ttn.h"
+#include "blacklistlocations.h"
 
 // Defined in ttn.ino
 void ttn_register(void (*callback)(uint8_t message));
@@ -178,7 +179,12 @@ bool trySend() {
 #endif
 
   char because = '?';
-  if (justSendNow) {
+#ifdef USE_LOCATION_BLACKLIST
+ if (isLocationBlacklisted(now_lat,now_long)) {
+    return false;
+  } else //This becomes an else if when USE_LOCATION_BLACKLIST is
+#endif  
+if (justSendNow) {
     justSendNow = false;
     Serial.println("** JUST_SEND_NOW");
     because = '>';
