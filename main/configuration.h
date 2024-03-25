@@ -107,6 +107,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DEADZONE_RADIUS_M 500  // meters
 #endif
 
+// Uplink format, defaults into a shorter payload. 7 bytes instead of 11. The altitude is in blocks of 150m
+// and the sattelite count is combined into a single byte. The decoder takes care of this.
+#define UPLINK_SHORT 
+
 // There are some extra non-Mapper Uplink messages we can send, but there's no good way to avoid sending these
 // to all Integrations from the Decoder.  This causes (normal) Error messages on the Console because Mapper will throw
 // them out for having no coordinates.  It doesn't hurt anything, as they are correctly filtered by the Decoder, but if

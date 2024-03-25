@@ -45,7 +45,12 @@
 #include "sleep.h"
 #include "ttn.h"
 
+#ifndef UPLINK_SHORT
 #define FPORT_MAPPER 2  // FPort for Uplink messages -- must match Helium Console Decoder script!
+#else
+#define FPORT_MAPPER 3  // FPort for Uplink messages -- must match Helium Console Decoder script!
+#endif
+
 #define FPORT_STATUS 5
 #define FPORT_GPSLOST 6
 
@@ -183,6 +188,7 @@ void build_mapper_packet() {
   sprintf(buffer, "Sats: %d", sats);
   Serial.println(buffer);
 
+  #ifndef UPLINK_SHORT
   txBuffer[6] = (altitudeGps >> 8) & 0xFF;
   txBuffer[7] = altitudeGps & 0xFF;
 
@@ -190,6 +196,11 @@ void build_mapper_packet() {
   txBuffer[9] = battery_byte();
 
   txBuffer[10] = sats & 0xFF;
+  #else
+  uint8_t altitude_hundret = constrain((unsigned int)(round(altitudeGps/150)),0,31);
+  uint8_t sattelites_offset = constrain(sats,3,10)-3;
+  txBuffer[6] = (altitude_hundret << 3) | sattelites_offset;
+  #endif
 }
 
 // Helium requires a FCount reset sometime before hitting 0xFFFF
@@ -340,7 +351,13 @@ enum mapper_uplink_result mapper_uplink() {
   bool confirmed = (LORAWAN_CONFIRMED_EVERY > 0) && (ttn_get_count() % LORAWAN_CONFIRMED_EVERY == 0);
 
   // Send it!
-  if (!send_uplink(txBuffer, 11, FPORT_MAPPER, confirmed))
+  #ifndef UPLINK_SHORT
+  int transmitsize = 11;
+  #else 
+  int transmitsize = 7;
+  #endif
+
+  if (!send_uplink(txBuffer, transmitsize, FPORT_MAPPER, confirmed))
     return MAPPER_UPLINK_NOLORA;
 
   last_send_ms = now;
